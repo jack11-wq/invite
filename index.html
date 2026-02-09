@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>邀请函</title>
+  <style>
+    html, body { margin:0; height:100%; background:#000; }
+    .wrap{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#000; }
+    .poster{ width:100%; height:100%; object-fit:contain; display:block; background:#000; }
+    .tip{
+      position:fixed; left:50%; bottom:18px; transform:translateX(-50%);
+      padding:10px 14px; border-radius:999px;
+      background:rgba(255,255,255,.88);
+      font:14px/1.2 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei";
+      color:#111; z-index:10;
+      user-select:none;
+    }
+    .corner{
+      position:fixed; right:12px; top:12px;
+      padding:8px 10px; border-radius:999px;
+      background:rgba(255,255,255,.85);
+      font:14px/1.2 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei";
+      color:#111; z-index:10;
+      user-select:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <img class="poster" src="./poster.jpg" alt="邀请函海报" />
+    <div class="corner" id="btn">🔊 播放音乐</div>
+    <div class="tip" id="tip">提示：点击任意位置开启音乐</div>
+  </div>
+
+  <audio id="bgm" src="./bgm.mp3" preload="auto" loop playsinline webkit-playsinline></audio>
+
+  <script>
+    const audio = document.getElementById("bgm");
+    const wrap = document.getElementById("wrap");
+    const tip = document.getElementById("tip");
+    const btn = document.getElementById("btn");
+
+    function hideTips() {
+      tip.style.display = "none";
+      btn.textContent = "🎵 正在播放";
+    }
+
+    async function tryPlay() {
+      try {
+        await audio.play();
+        hideTips();
+      } catch (e) {
+        // 微信/浏览器策略可能阻止自动播放，等待用户手势
+      }
+    }
+
+    // 微信内：桥接 ready 后尝试播放
+    function wechatBridgePlay(){ tryPlay(); }
+    if (typeof WeixinJSBridge === "object" && typeof WeixinJSBridge.invoke === "function") {
+      wechatBridgePlay();
+    } else {
+      document.addEventListener("WeixinJSBridgeReady", wechatBridgePlay, false);
+    }
+
+    // 兜底：首次触摸/点击页面播放
+    function onFirstGesture() {
+      tryPlay();
+      wrap.removeEventListener("touchstart", onFirstGesture);
+      wrap.removeEventListener("click", onFirstGesture);
+    }
+    wrap.addEventListener("touchstart", onFirstGesture, { passive: true });
+    wrap.addEventListener("click", onFirstGesture);
+    btn.addEventListener("click", onFirstGesture);
+  </script>
+</body>
+</html>
